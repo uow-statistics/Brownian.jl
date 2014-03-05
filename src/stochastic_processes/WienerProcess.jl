@@ -14,13 +14,14 @@ WienerProcess(timepoints::Ranges) = WienerProcess(collect(timepoints), length(ti
 WienerProcess(t::Float64, n::Int) = WienerProcess(0:t/n:t, n)
 WienerProcess(t::Float64) = WienerProcess([t], 1)
 
-function rand(p::WienerProcess)
-  samples = Array(Float64, p.npoints)
+typealias BrownianMotion WienerProcess
 
+function rand!(p::WienerProcess, samples::Vector{Float64})
   samples[1] = rand(Normal(0.0, sqrt(p.timepoints[1])))
   for i = 2:p.npoints
-    samples[i] = rand(Normal(0.0, sqrt(p.timepoints[i]-p.timepoints[i-1])))
+    samples[i] = rand(Normal(0.0, sqrt(p.timepoints[i]-p.timepoints[i-1])))+samples[i-1]
   end
-
   samples
 end
+
+rand(p::WienerProcess) = rand!(p, Array(Float64, p.npoints))

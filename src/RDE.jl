@@ -2,7 +2,7 @@ module RDE
 
 using Distributions
 
-import Base.rand
+import Base: rand!, rand
 import Distributions: VariateForm, Univariate, Multivariate, ValueSupport, Discrete, Continuous
 
 export
@@ -11,11 +11,13 @@ export
   MultivariateStochasticProcess,
   DiscreteStochasticProcess,
   ContinuousStochasticProcess,
-  DiscreteUnivariateStochasticProcess,
+  #DiscreteUnivariateStochasticProcess,
   ContinuousUnivariateStochasticProcess,
-  DiscreteMultivariateStochasticProcess,
-  ContinuousMultivariateStochasticProcess,
+  #DiscreteMultivariateStochasticProcess,
+  #ContinuousMultivariateStochasticProcess,
   WienerProcess,
+  BrownianMotion,
+  rand!,
   rand
 
 include(joinpath("stochastic_processes", "StochasticProcess.jl"))
