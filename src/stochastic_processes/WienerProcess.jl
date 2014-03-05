@@ -31,9 +31,9 @@ end
 
 function rand!(p::Vector{WienerProcess}, x::Matrix{Float64})
   for j = 1:length(p)
-    x[1, j] = rand(Normal(0.0, sqrt(p.timepoints[1])))
-    for i = 2:p.npoints
-      x[i, j] = rand(Normal(0.0, sqrt(p.timepoints[i]-p.timepoints[i-1])))+x[i-1, j]
+    x[1, j] = rand(Normal(0.0, sqrt(p[j].timepoints[1])))
+    for i = 2:p[1].npoints
+      x[i, j] = rand(Normal(0.0, sqrt(p[j].timepoints[i]-p[j].timepoints[i-1])))+x[i-1, j]
     end
   end
   x
