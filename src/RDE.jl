@@ -15,12 +15,11 @@ export
   ContinuousUnivariateStochasticProcess,
   #DiscreteMultivariateStochasticProcess,
   #ContinuousMultivariateStochasticProcess,
-  WienerProcess,
   BrownianMotion,
   rand!,
   rand
 
-include(joinpath("stochastic_processes", "StochasticProcess.jl"))
-include(joinpath("stochastic_processes", "WienerProcess.jl"))
+include(joinpath("processes", "StochasticProcess.jl"))
+include(joinpath("processes", "univariate", "BrownianMotion.jl"))
 
 end # module
