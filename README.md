@@ -1,3 +1,3 @@
-# RDE
+# RoughPaths
 
-Paremeter Estimation for Rough Differential Equations
+Paremeter Estimation for Differential Equations Driven by Rough Paths

@@ -9,4 +9,4 @@ typealias ContinuousStochasticProcess{F<:VariateForm} StochasticProcess{F, Conti
 #typealias DiscreteUnivariateStochasticProcess StochasticProcess{Univariate, Discrete}
 typealias ContinuousUnivariateStochasticProcess StochasticProcess{Univariate, Continuous}
 #typealias DiscreteMultivariateStochasticProcess StochasticProcess{Multivariate, Discrete}
-#typealias ContinuousMultivariateStochasticProcess StochasticProcess{Multivariate, Continuous}
+typealias ContinuousMultivariateStochasticProcess StochasticProcess{Multivariate, Continuous}
