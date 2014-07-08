@@ -4,7 +4,7 @@ using Distributions
 using PDMats
 
 import Base: rand!, rand
-import Distributions: VariateForm, Univariate, Multivariate, ValueSupport, Discrete, Continuous
+import Distributions: VariateForm, Univariate, Multivariate, ValueSupport, Discrete, Continuous, Sampleable
 
 export
   StochasticProcess,
@@ -17,13 +17,17 @@ export
   #DiscreteMultivariateStochasticProcess,
   ContinuousMultivariateStochasticProcess,
   BrownianMotion,
-  MvBrownianMotion,
+  #MvBrownianMotion,
+  FGN,
+  FBM,
+  cov,
   rand!,
   rand
 
 include(joinpath("processes", "StochasticProcess.jl"))
 include(joinpath("processes", "univariate", "BrownianMotion.jl"))
+include(joinpath("processes", "univariate", "FGN.jl"))
 include(joinpath("processes", "univariate", "FBM.jl"))
-include(joinpath("processes", "multivariate", "MvBrownianMotion.jl"))
+#include(joinpath("processes", "multivariate", "MvBrownianMotion.jl"))
 
 end # module

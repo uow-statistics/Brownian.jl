@@ -1,1 +1,3 @@
-## Brownian: Simulation of Brownian-Based Stochastic Processes
+## Brownian
+
+Simulation of Brownian-Based Stochastic Processes

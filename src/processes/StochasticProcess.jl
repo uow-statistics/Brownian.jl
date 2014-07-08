@@ -1,4 +1,4 @@
-abstract StochasticProcess{F<:VariateForm, S<:ValueSupport}
+abstract StochasticProcess{F<:VariateForm, S<:ValueSupport} <: Sampleable{F,S}
 
 typealias UnivariateStochasticProcess{S<:ValueSupport} StochasticProcess{Univariate, S}
 typealias MultivariateStochasticProcess{S<:ValueSupport} StochasticProcess{Multivariate, S}
