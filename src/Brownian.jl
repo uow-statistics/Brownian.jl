@@ -1,4 +1,4 @@
-module RoughPaths
+module Brownian
 
 using Distributions
 using PDMats
@@ -17,12 +17,13 @@ export
   #DiscreteMultivariateStochasticProcess,
   ContinuousMultivariateStochasticProcess,
   BrownianMotion,
-  GenericMvBrownianMotion,
+  MvBrownianMotion,
   rand!,
   rand
 
 include(joinpath("processes", "StochasticProcess.jl"))
 include(joinpath("processes", "univariate", "BrownianMotion.jl"))
+include(joinpath("processes", "univariate", "FBM.jl"))
 include(joinpath("processes", "multivariate", "MvBrownianMotion.jl"))
 
 end # module
