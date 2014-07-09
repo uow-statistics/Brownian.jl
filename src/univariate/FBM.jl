@@ -44,4 +44,24 @@ function cov(p::FBM)
   c
 end
 
-# rand_chol!(p::FBM, x::Vector{Float64}) = sqrtm(cov(p))*randn(p.npoints)
+rand_chol!(p::FBM, x::Vector{Float64}) = chol(cov(p), :L)*randn(p.npoints)
+
+rand_chol(p::FBM) = rand!(p, Array(Float64, p.npoints))
+
+function rand_chol(p::Vector{FBM})
+  np = length(p)
+
+  if np > 1
+    for i = 2:np
+      p[1].npoints == p[i].npoints || error("All FBM must have same npoints.")
+    end
+  end
+
+  x = Array(Float64, p[1].npoints, np)
+
+  for i = 1:np
+    x[:, 1] = rand_chol(p[i])
+  end
+
+  x
+end

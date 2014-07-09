@@ -24,10 +24,9 @@ export
   rand!,
   rand
 
-include(joinpath("processes", "StochasticProcess.jl"))
-include(joinpath("processes", "univariate", "BrownianMotion.jl"))
-include(joinpath("processes", "univariate", "FGN.jl"))
-include(joinpath("processes", "univariate", "FBM.jl"))
-#include(joinpath("processes", "multivariate", "MvBrownianMotion.jl"))
+include("StochasticProcess.jl")
+include(joinpath("univariate", "BrownianMotion.jl"))
+include(joinpath("univariate", "FBM.jl"))
+#include(joinpath("multivariate", "MvBrownianMotion.jl"))
 
 end # module
