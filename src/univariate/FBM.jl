@@ -104,22 +104,30 @@ end
 ### The complexity of the algorithm is O(n*log(n)), where n=2^p is the number of FBM samples.
 function rand_fft(p::FBM; fbm::Bool=true)
   # Determine number of points of simulated FBM
-  n::Int64 = 2^ceil(log2(p.n-1))
+  pnmone::Int64 = p.n-1
+  n::Int64 = 2^ceil(log2(pnmone))
 
-  # Construct circular covariant matrix
+  # Compute covariant matrix of underlying FGN
   c = Array(Float64, n+1)
   autocov!(c, FGN(p.h), 0:n)
-  c = [c, c[end-1:-1:2]]
 
-  # Compute the eigenvalues of the circular covariant matrix
-  twonpoints = 2*n
-  l = real(fft(c))/(twonpoints)
+  # Compute square root of eigenvalues of circular covariant matrix
+  lsqrt = sqrt(real(fft([c, c[end-1:-1:2]])))
 
-  # Derive Fractional Gaussian Noise (FGN)
-  w = fft(sqrt(l).*complex(randn(twonpoints), randn(twonpoints)))
-  w = n^(-p.h)*real(W[1:twonpoints])
+  # Simulate standard random normal variables
+  twon::Int64 = 2*n
+  z = randn(twon)
 
-  if ptype == :fbm
+  # Compute the circular process in the Fourier domain
+  x = sqrt(0.5)*lsqrt[2:n].*complex(z[2*(2:n)-2], z[2*(2:n)-1])
+  y = [lsqrt[1]*z[1], x, lsqrt[n+1]*z[twon], conj(reverse(x))]
+
+  # Generate fractional Gaussian noise (retain only the first p.n-1 values)
+  w = real(bfft(y))[1:pnmone]/sqrt(twon)
+
+  if fbm
+    w = [0, w]
+  else
     w = cumsum(w)
   end
 
