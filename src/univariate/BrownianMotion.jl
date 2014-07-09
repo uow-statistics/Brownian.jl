@@ -3,7 +3,7 @@ immutable BrownianMotion <: ContinuousUnivariateStochasticProcess
   npoints::Int64
 
   function BrownianMotion(t::Vector{Float64}, n::Int64)
-    t[1] > 0.0 || error("First provided time point must be positive for Brownian motion.")
+    t[1] == 0.0 || error("Starting time point must be equal to 0.0.")
     issorted(t, lt=<=) || error("The time points must be strictly sorted.")
     int64(length(t)) == n || error("Number of time points must be equal to the vector holding the time points.")
     new(t, n)
@@ -20,7 +20,7 @@ BrownianMotion(t::Ranges, n::Int) = BrownianMotion[BrownianMotion(t) for i = 1:n
 BrownianMotion(t::Float64, npoints::Int64, npaths::Int) = BrownianMotion[BrownianMotion(t, npoints) for i = 1:npaths]
 
 function rand!(p::BrownianMotion, x::Vector{Float64})
-  x[1] = rand(Normal(0.0, sqrt(p.timepoints[1])))
+  x[1] = 0.
   for i = 2:p.npoints
     x[i] = rand(Normal(0.0, sqrt(p.timepoints[i]-p.timepoints[i-1])))+x[i-1]
   end
@@ -29,7 +29,7 @@ end
 
 function rand!(p::Vector{BrownianMotion}, x::Matrix{Float64})
   for j = 1:length(p)
-    x[1, j] = rand(Normal(0.0, sqrt(p[j].timepoints[1])))
+    x[1, j] = 0.
     for i = 2:p[j].npoints
       x[i, j] = rand(Normal(0.0, sqrt(p[j].timepoints[i]-p[j].timepoints[i-1])))+x[i-1, j]
     end

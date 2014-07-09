@@ -4,7 +4,7 @@ immutable FBM <: ContinuousUnivariateStochasticProcess
   hurst::Float64
 
   function FBM(t::Vector{Float64}, n::Int64, h::Float64)
-    t[1] > 0.0 || error("First provided time point must be positive for Brownian motion.")
+    t[1] == 0.0 || error("Starting time point must be equal to 0.0.")
     issorted(t, lt=<=) || error("The time points must be strictly sorted.")
     int64(length(t)) == n || error("Number of time points must be equal to the vector holding the time points.")
     0 < h < 1 || error("Hurst index must be between 0 and 1.")
@@ -27,16 +27,17 @@ function cov(p::FBM, i::Int64, j::Int64)
 end
 
 function cov(p::FBM)
-  c = Array(Float64, p.npoints, p.npoints)
+  npoints::Int64 = p.npoints-1
+  c = Array(Float64, npoints, npoints)
 
-  for i = 1:p.npoints
+  for i = 1:npoints
     for j = 1:i
-      c[i, j] = cov(p, i, j)
+      c[i, j] = cov(p, i+1, j+1)
     end
   end
 
-  for i = 1:p.npoints
-    for j = (i+1):p.npoints
+  for i = 1:npoints
+    for j = (i+1):npoints
       c[i, j] = c[j, i]
     end
   end
@@ -44,24 +45,53 @@ function cov(p::FBM)
   c
 end
 
-rand_chol!(p::FBM, x::Vector{Float64}) = chol(cov(p), :L)*randn(p.npoints)
-
-rand_chol(p::FBM) = rand!(p, Array(Float64, p.npoints))
+### rand_chol generates FBM using the method based on Cholesky decomposition.
+### T. Dieker, Simulation of Fractional Brownian Motion, master thesis, 2004.
+### The complexity of the algorithm is O(n^3), where n is the number of FBM samples.
+rand_chol(p::FBM) = [0., chol(cov(p), :L)*randn(p.npoints-1)]
 
 function rand_chol(p::Vector{FBM})
-  np = length(p)
+  np::Int64 = length(p)
 
   if np > 1
     for i = 2:np
-      p[1].npoints == p[i].npoints || error("All FBM must have same npoints.")
+      p[1].npoints == p[i].npoints || error("All FBM must have same number of points.")
     end
   end
 
   x = Array(Float64, p[1].npoints, np)
 
   for i = 1:np
-    x[:, 1] = rand_chol(p[i])
+    x[:, i] = rand_chol(p[i])
   end
 
   x
+end
+
+### rand_fft generates FBM using fast Fourier transform (FFT).
+### The time interval of FBM is [0, 1] with a stepsize of 2^p, where p is a natural number.
+### The algorithm is known as the Davis-Harte method or the method of circular embedding.
+### R.B. Davies and D.S. Harte, Tests for Hurst Effect, Biometrika, 74 (1987), pp. 95–102.
+### The complexity of the algorithm is O(n*log(n)), where n=2^p is the number of FBM samples.
+function rand_fft(p::FBM)
+  # Determine number of points of simulated FBM
+  log2n = log2(p.npoints-1)
+  npoints::Int64 = isinteger(log2n) ? p.npoints : 2^floor(log2n)
+
+  # Construct circular covariant matrix
+  c = Array(Float64, npoints+1)
+  twop::Float64 = 2*p.hurst
+  c[1] = 1
+  for k = 1:npoints
+    c[k+1] = 0.5*((k+1)^twop+(k-1)^twop-2*k^twop)
+  end
+  c = [c, c[end-1:-1:2]]
+
+  # Compute the eigenvalues of the circular covariant matrix
+  twonpoints = 2*npoints
+  l = real(fft(c))/(twonpoints)
+
+  # Derive Fractional Gaussian Noise (FGN)
+  w = fft(sqrt(l).*complex(randn(twonpoints), randn(twonpoints)))
+  w = npoints^(-p.hurst)*real(W[1:twonpoints+1])
 end

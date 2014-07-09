@@ -22,6 +22,7 @@ export
   FBM,
   cov,
   rand!,
+  rand_chol,
   rand
 
 include("StochasticProcess.jl")
