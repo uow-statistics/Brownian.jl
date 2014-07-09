@@ -1,7 +1,8 @@
+# Fractional Brownian motion
 immutable FBM <: ContinuousUnivariateStochasticProcess
-  timepoints::Vector{Float64}
-  npoints::Int64
-  hurst::Float64
+  t::Vector{Float64}
+  n::Int64
+  h::Float64 # Hurst index
 
   function FBM(t::Vector{Float64}, n::Int64, h::Float64)
     t[1] == 0.0 || error("Starting time point must be equal to 0.0.")
@@ -18,26 +19,54 @@ FBM(t::Float64, n::Int64, h::Float64) = FBM(t/n:t/n:t, h)
 FBM(t::Float64, h::Float64) = FBM([t], 1, h)
 
 FBM(t::Matrix{Float64}, h::Float64) = FBM[FBM(t[:, i], h) for i = 1:size(t, 2)]
-FBM(t::Ranges, n::Int, h::Float64) = FBM[FBM(t, h) for i = 1:n]
-FBM(t::Float64, npoints::Int64, npaths::Int, h::Float64) = FBM[FBM(t, npoints, h) for i = 1:npaths]
+FBM(t::Ranges, np::Int, h::Float64) = FBM[FBM(t, h) for i = 1:np]
+FBM(t::Float64, n::Int64, np::Int, h::Float64) = FBM[FBM(t, n, h) for i = 1:np]
 
-function cov(p::FBM, i::Int64, j::Int64)
-  twoh::Float64 = 2*p.hurst
-  0.5*((p.timepoints[i])^twoh+(p.timepoints[j])^twoh-abs(p.timepoints[i]-p.timepoints[j])^twoh)
+# Fractional Gaussian noise
+immutable FGN <: ContinuousUnivariateStochasticProcess
+  σ::Float64
+  h::Float64 # Hurst index
+
+  function FGN(σ::Float64, h::Float64)
+    σ > 0. || error("Standard deviation must be positive.")
+    0 < h < 1 || error("Hurst index must be between 0 and 1.")
+    new(σ, h)
+  end
 end
 
-function cov(p::FBM)
-  npoints::Int64 = p.npoints-1
-  c = Array(Float64, npoints, npoints)
+FGN(h::Float64) = FGN(1., h)
 
-  for i = 1:npoints
+function autocov!(y::Vector{Float64}, p::FGN, lags::IntegerVector)
+  nlags = length(lags)
+  sigmasq = abs2(p.σ)
+  twoh::Float64 = 2*p.h
+
+  for i = 1:nlags
+    y[i] = 0.5*sigmasq*(abs(lags[i]+1)^twoh+abs(lags[i]-1)^twoh-2*abs(lags[i])^twoh)
+  end
+
+  y
+end
+
+autocov(p::FGN, lags::IntegerVector) = autocov!(Array(Float64, length(lags)), p, lags)
+
+function autocov(p::FBM, i::Int64, j::Int64)
+  twoh::Float64 = 2*p.h
+  0.5*((p.t[i])^twoh+(p.t[j])^twoh-abs(p.t[i]-p.t[j])^twoh)
+end
+
+function autocov(p::FBM)
+  n::Int64 = p.n-1
+  c = Array(Float64, n, n)
+
+  for i = 1:n
     for j = 1:i
-      c[i, j] = cov(p, i+1, j+1)
+      c[i, j] = autocov(p, i+1, j+1)
     end
   end
 
-  for i = 1:npoints
-    for j = (i+1):npoints
+  for i = 1:n
+    for j = (i+1):n
       c[i, j] = c[j, i]
     end
   end
@@ -48,18 +77,18 @@ end
 ### rand_chol generates FBM using the method based on Cholesky decomposition.
 ### T. Dieker, Simulation of Fractional Brownian Motion, master thesis, 2004.
 ### The complexity of the algorithm is O(n^3), where n is the number of FBM samples.
-rand_chol(p::FBM) = [0., chol(cov(p), :L)*randn(p.npoints-1)]
+rand_chol(p::FBM) = [0., chol(autocov(p), :L)*randn(p.n-1)]
 
 function rand_chol(p::Vector{FBM})
   np::Int64 = length(p)
 
   if np > 1
     for i = 2:np
-      p[1].npoints == p[i].npoints || error("All FBM must have same number of points.")
+      p[1].n == p[i].n || error("All FBM must have same number of points.")
     end
   end
 
-  x = Array(Float64, p[1].npoints, np)
+  x = Array(Float64, p[1].n, np)
 
   for i = 1:np
     x[:, i] = rand_chol(p[i])
@@ -70,28 +99,29 @@ end
 
 ### rand_fft generates FBM using fast Fourier transform (FFT).
 ### The time interval of FBM is [0, 1] with a stepsize of 2^p, where p is a natural number.
-### The algorithm is known as the Davis-Harte method or the method of circular embedding.
+### The algorithm is known as the Davies-Harte method or the method of circular embedding.
 ### R.B. Davies and D.S. Harte, Tests for Hurst Effect, Biometrika, 74 (1987), pp. 95–102.
 ### The complexity of the algorithm is O(n*log(n)), where n=2^p is the number of FBM samples.
-function rand_fft(p::FBM)
+function rand_fft(p::FBM; fbm::Bool=true)
   # Determine number of points of simulated FBM
-  log2n = log2(p.npoints-1)
-  npoints::Int64 = isinteger(log2n) ? p.npoints : 2^floor(log2n)
+  n::Int64 = 2^ceil(log2(p.n-1))
 
   # Construct circular covariant matrix
-  c = Array(Float64, npoints+1)
-  twop::Float64 = 2*p.hurst
-  c[1] = 1
-  for k = 1:npoints
-    c[k+1] = 0.5*((k+1)^twop+(k-1)^twop-2*k^twop)
-  end
+  c = Array(Float64, n+1)
+  autocov!(c, FGN(p.h), 0:n)
   c = [c, c[end-1:-1:2]]
 
   # Compute the eigenvalues of the circular covariant matrix
-  twonpoints = 2*npoints
+  twonpoints = 2*n
   l = real(fft(c))/(twonpoints)
 
   # Derive Fractional Gaussian Noise (FGN)
   w = fft(sqrt(l).*complex(randn(twonpoints), randn(twonpoints)))
-  w = npoints^(-p.hurst)*real(W[1:twonpoints+1])
+  w = n^(-p.h)*real(W[1:twonpoints])
+
+  if ptype == :fbm
+    w = cumsum(w)
+  end
+
+  w
 end

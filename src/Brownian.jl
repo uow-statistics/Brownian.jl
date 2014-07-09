@@ -2,9 +2,11 @@ module Brownian
 
 using Distributions
 using PDMats
+using StatsBase
 
 import Base: rand!, rand
 import Distributions: VariateForm, Univariate, Multivariate, ValueSupport, Discrete, Continuous, Sampleable
+import StatsBase: IntegerVector, autocov!, autocov
 
 export
   StochasticProcess,
@@ -18,11 +20,11 @@ export
   ContinuousMultivariateStochasticProcess,
   BrownianMotion,
   #MvBrownianMotion,
-  FGN,
   FBM,
-  cov,
+  FGN,
+  autocov!,
+  autocov,
   rand!,
-  rand_chol,
   rand
 
 include("StochasticProcess.jl")
