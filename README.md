@@ -11,13 +11,14 @@ The future roadmap would be to provide implementations for sampling from
 * one-dimensional fractional Brownian motion using the Hosking method,
 * multidimensional Brownian and fractional Brownian motion,
 * reflected Brownian motion (RBM).
+
 Willing developers are welcome to contribute to the package.
 
 ### Short tutorial
 
 ### Example 1: simulation of Brownian motion
 
-To simulate a Brownian motion at the time points (0, 0.1, 0.5, 0.75, 1), use the following snippet:
+To simulate Brownian motion at the time points (0, 0.1, 0.5, 0.75, 1), use the following snippet:
 
 ```
 using Brownian
@@ -27,10 +28,10 @@ p = BrownianMotion([0, 0.1, 0.5, 0.75, 1])
 rand(p)
 ```
 
-### Example 2: simulation of fractional Brownian motion and of fractional Gaussian noise
+### Example 2: simulation of FBM and FGN
 
 Suppose that interest is in simulating fractional Brownian motion with Hurst index equal to 0.4 in the time interval
-[0, 1] with a time step equal to 1/2^n for some natural n (for example n=10).
+[0, 1] with a time step of 1/2^n for some natural n (for example n=10).
 
 ```
 using Brownian
@@ -44,7 +45,7 @@ rand(p)
 rand(p, rtype=:chol)
 ```
 
-To simulate fractional Gaussian noise with the same Hurst index, try
+To simulate fractional Gaussian noise with the same Hurst index,
 
 ```
 # Using the Davies-Harte algorithm
