@@ -77,21 +77,25 @@ end
 ### rand_chol generates FBM using the method based on Cholesky decomposition.
 ### T. Dieker, Simulation of Fractional Brownian Motion, master thesis, 2004.
 ### The complexity of the algorithm is O(n^3), where n is the number of FBM samples.
-rand_chol(p::FBM) = [0., chol(autocov(p), :L)*randn(p.n-1)]
+function rand_chol(p::FBM; fbm::Bool=true)
+  w = chol(autocov(p), :L)*randn(p.n-1)
 
-function rand_chol(p::Vector{FBM})
-  np::Int64 = length(p)
-
-  if np > 1
-    for i = 2:np
-      p[1].n == p[i].n || error("All FBM must have same number of points.")
-    end
+  # If fbm is true return FBM, otherwise return FGN
+  if fbm
+    w = [0., w]
+  else
+    w = diff(w)
   end
 
-  x = Array(Float64, p[1].n, np)
+  w
+end
 
-  for i = 1:np
-    x[:, i] = rand_chol(p[i])
+function rand_chol(p::Vector{FBM}; fbm::Bool=true)
+  n::Int64 = fbm ? p[1].n : p[1].n-1
+  x = Array(Float64, n, length(p))
+
+  for i = 1:n
+    x[:, i] = rand_chol(p[i], fbm=fbm)
   end
 
   x
@@ -112,19 +116,19 @@ function rand_fft(p::FBM; fbm::Bool=true)
   autocov!(c, FGN(p.h), 0:n)
 
   # Compute square root of eigenvalues of circular covariant matrix
-  lsqrt = sqrt(real(fft([c, c[end-1:-1:2]])))
+  l = real(fft([c, c[end-1:-1:2]]))
+  all(i->(i>0), l) || error("Non-positive eigenvalues encountered.")
+  lsqrt = sqrt(l)
 
   # Simulate standard random normal variables
   twon::Int64 = 2*n
   z = randn(twon)
 
-  # Compute the circular process in the Fourier domain
-  x = sqrt(0.5)*lsqrt[2:n].*complex(z[2*(2:n)-2], z[2*(2:n)-1])
-  y = [lsqrt[1]*z[1], x, lsqrt[n+1]*z[twon], conj(reverse(x))]
-
   # Generate fractional Gaussian noise (retain only the first p.n-1 values)
-  w = real(bfft(y))[1:pnmone]/sqrt(twon)
+  x = sqrt(0.5)*lsqrt[2:n].*complex(z[2*(2:n)-2], z[2*(2:n)-1])
+  w = real(bfft([lsqrt[1]*z[1], x, lsqrt[n+1]*z[twon], conj(reverse(x))]))[1:pnmone]/sqrt(twon)
 
+  # If fbm is true return FBM, otherwise return FGN
   if fbm
     w = [0, w]
   else
@@ -132,4 +136,33 @@ function rand_fft(p::FBM; fbm::Bool=true)
   end
 
   w
+end
+
+function rand_fft(p::Vector{FBM}; fbm::Bool=true)
+  n::Int64 = fbm ? p[1].n : p[1].n-1
+  x = Array(Float64, n, length(p))
+
+  for i = 1:n
+    x[:, i] = rand_fft(p[i], fbm=fbm)
+  end
+
+  x
+end
+
+function rand(p::FBM; fbm::Bool=true, rtype::Symbol=:fft)
+  if rtype == :chol
+    rand_chol(p; fbm=fbm)
+  elseif rtype == :fft
+    rand_fft(p; fbm=fbm)
+  else
+  end
+end
+
+function rand(p::Vector{FBM}; fbm::Bool=true, rtype::Symbol=:fft)
+  if rtype == :chol
+    rand_chol(p; fbm=fbm)
+  elseif rtype == :fft
+    rand_fft(p; fbm=fbm)
+  else
+  end
 end

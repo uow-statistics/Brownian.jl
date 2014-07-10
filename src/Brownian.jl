@@ -25,8 +25,7 @@ export
   autocov!,
   autocov,
   rand!,
-  rand,
-  rand_fft
+  rand
 
 include("StochasticProcess.jl")
 include(joinpath("univariate", "BrownianMotion.jl"))
