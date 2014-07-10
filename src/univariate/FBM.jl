@@ -92,9 +92,10 @@ end
 
 function rand_chol(p::Vector{FBM}; fbm::Bool=true)
   n::Int64 = fbm ? p[1].n : p[1].n-1
-  x = Array(Float64, n, length(p))
+  np = length(p)
+  x = Array(Float64, n, np)
 
-  for i = 1:n
+  for i = 1:np
     x[:, i] = rand_chol(p[i], fbm=fbm)
   end
 
@@ -104,7 +105,10 @@ end
 ### rand_fft generates FBM using fast Fourier transform (FFT).
 ### The time interval of FBM is [0, 1] with a stepsize of 2^p, where p is a natural number.
 ### The algorithm is known as the Davies-Harte method or the method of circular embedding.
-### R.B. Davies and D.S. Harte, Tests for Hurst Effect, Biometrika, 74 (1987), pp. 95–102.
+### R.B. Davies and D.S. Harte, Tests for Hurst Effect, Biometrika, 74 (1), 1987, pp. 95-102.
+### For a more recent publication, see P.F. Craigmile, Simulating a Class of Stationary Gaussian Processes Using the
+### Davies–Harte Algorithm, With Application to Long Memory Processes, Journal of Time Series Analysis, 24 (5), 2003,
+### pp. 505-511.
 ### The complexity of the algorithm is O(n*log(n)), where n=2^p is the number of FBM samples.
 function rand_fft(p::FBM; fbm::Bool=true)
   # Determine number of points of simulated FBM
@@ -130,7 +134,7 @@ function rand_fft(p::FBM; fbm::Bool=true)
 
   # If fbm is true return FBM, otherwise return FGN
   if fbm
-    w = [0, w]
+    w = [0., w]
   else
     w = cumsum(w)
   end
@@ -140,9 +144,10 @@ end
 
 function rand_fft(p::Vector{FBM}; fbm::Bool=true)
   n::Int64 = fbm ? p[1].n : p[1].n-1
-  x = Array(Float64, n, length(p))
+  np = length(p)
+  x = Array(Float64, n, np)
 
-  for i = 1:n
+  for i = 1:np
     x[:, i] = rand_fft(p[i], fbm=fbm)
   end
 
