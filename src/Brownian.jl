@@ -4,7 +4,7 @@ using Distributions
 using PDMats
 using StatsBase
 
-import Base: rand!, rand
+import Base: convert, rand!, rand
 import Distributions: VariateForm, Univariate, Multivariate, ValueSupport, Discrete, Continuous, Sampleable
 import StatsBase: IntegerVector, autocov!, autocov
 
@@ -22,6 +22,7 @@ export
   #MvBrownianMotion,
   FBM,
   FGN,
+  convert,
   autocov!,
   autocov,
   rand!,

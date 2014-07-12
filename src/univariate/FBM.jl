@@ -36,6 +36,8 @@ end
 
 FGN(h::Float64) = FGN(1., h)
 
+convert(::Type{FGN}, p::FBM) = FGN(((p.t[end]-p.t[1])/(p.n-1))^p.h, p.h)
+
 function autocov(p::FGN, i::Int64, j::Int64)
   twoh::Float64 = 2*p.h
   0.5*abs2(p.σ)*(abs(j-i+1)^twoh+abs(j-i-1)^twoh-2*abs(j-i)^twoh)
@@ -144,7 +146,7 @@ function rand_fft(p::FBM; fbm::Bool=true)
 
   # Compute autocovariance sequence of underlying FGN
   c = Array(Float64, n+1)
-  autocov!(c, FGN(p.h, (1/n)^p.h), 0:n)
+  autocov!(c, FGN((1/n)^p.h, p.h), 0:n)
 
   # Compute square root of eigenvalues of circular autocovariance sequence
   l = real(fft([c, c[end-1:-1:2]]))
