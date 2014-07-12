@@ -36,13 +36,37 @@ end
 
 FGN(h::Float64) = FGN(1., h)
 
+function autocov(p::FGN, i::Int64, j::Int64)
+  twoh::Float64 = 2*p.h
+  0.5*abs2(p.σ)*(abs(j-i+1)^twoh+abs(j-i-1)^twoh-2*abs(j-i)^twoh)
+end
+
+function autocov!(c::Matrix{Float64}, p::FGN)
+  n::Int64 = size(c, 1)
+
+  for i = 1:n
+    for j = 1:i
+      c[i, j] = autocov(p, i, j)
+    end
+  end
+
+  for i = 1:n
+    for j = (i+1):n
+      c[i, j] = c[j, i]
+    end
+  end
+
+  c
+end
+
+autocov(p::FGN, maxlag::Int64) = autocov!(Array(Float64, maxlag, maxlag), p)
+
 function autocov!(y::Vector{Float64}, p::FGN, lags::IntegerVector)
   nlags = length(lags)
-  sigmasq = abs2(p.σ)
   twoh::Float64 = 2*p.h
 
   for i = 1:nlags
-    y[i] = 0.5*sigmasq*(abs(lags[i]+1)^twoh+abs(lags[i]-1)^twoh-2*abs(lags[i])^twoh)
+    y[i] = 0.5*abs2(p.σ)*(abs(lags[i]+1)^twoh+abs(lags[i]-1)^twoh-2*abs(lags[i])^twoh)
   end
 
   y
@@ -55,9 +79,8 @@ function autocov(p::FBM, i::Int64, j::Int64)
   0.5*((p.t[i])^twoh+(p.t[j])^twoh-abs(p.t[i]-p.t[j])^twoh)
 end
 
-function autocov(p::FBM)
+function autocov!(c::Matrix{Float64}, p::FBM)
   n::Int64 = p.n-1
-  c = Array(Float64, n, n)
 
   for i = 1:n
     for j = 1:i
@@ -74,6 +97,11 @@ function autocov(p::FBM)
   c
 end
 
+function autocov(p::FBM)
+  n::Int64 = p.n-1
+  autocov!(Array(Float64, n, n), p)
+end
+
 ### rand_chol generates FBM using the method based on Cholesky decomposition.
 ### T. Dieker, Simulation of Fractional Brownian Motion, master thesis, 2004.
 ### The complexity of the algorithm is O(n^3), where n is the number of FBM samples.
@@ -81,9 +109,8 @@ function rand_chol(p::FBM; fbm::Bool=true)
   w = chol(autocov(p), :L)*randn(p.n-1)
 
   # If fbm is true return FBM, otherwise return FGN
-  if fbm
-    w = [0., w]
-  else
+  w = [0., w]
+  if !fbm
     w = diff(w)
   end
 
@@ -115,11 +142,11 @@ function rand_fft(p::FBM; fbm::Bool=true)
   pnmone::Int64 = p.n-1
   n::Int64 = 2^ceil(log2(pnmone))
 
-  # Compute covariant matrix of underlying FGN
+  # Compute autocovariance sequence of underlying FGN
   c = Array(Float64, n+1)
-  autocov!(c, FGN(p.h), 0:n)
+  autocov!(c, FGN(p.h, (1/n)^p.h), 0:n)
 
-  # Compute square root of eigenvalues of circular covariant matrix
+  # Compute square root of eigenvalues of circular autocovariance sequence
   l = real(fft([c, c[end-1:-1:2]]))
   all(i->(i>0), l) || error("Non-positive eigenvalues encountered.")
   lsqrt = sqrt(l)
@@ -134,9 +161,7 @@ function rand_fft(p::FBM; fbm::Bool=true)
 
   # If fbm is true return FBM, otherwise return FGN
   if fbm
-    w = [0., w]
-  else
-    w = cumsum(w)
+    w = [0., cumsum(w)]
   end
 
   w

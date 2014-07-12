@@ -56,4 +56,4 @@ rand(p, fbm=false, rtype=:chol)
 ```
 
 Note that fractional Brownian motion is obtained from fractional Gaussian noise by taking cumulative sums (and 
-conversely FGN is computed from FBN by differencing).
+conversely FGN is computed from FBM by differencing).
