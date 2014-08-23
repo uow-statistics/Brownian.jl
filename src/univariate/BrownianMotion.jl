@@ -3,7 +3,7 @@ immutable BrownianMotion <: ContinuousUnivariateStochasticProcess
   n::Int64
 
   function BrownianMotion(t::Vector{Float64}, n::Int64)
-    t[1] == 0.0 || error("Starting time point must be equal to 0.0.")
+    t[1] == 0. || error("Starting time point must be equal to 0.0.")
     issorted(t, lt=<=) || error("The time points must be strictly sorted.")
     int64(length(t)) == n || error("Number of time points must be equal to the vector holding the time points.")
     new(t, n)

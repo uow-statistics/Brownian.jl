@@ -5,10 +5,10 @@ immutable FBM <: ContinuousUnivariateStochasticProcess
   h::Float64 # Hurst index
 
   function FBM(t::Vector{Float64}, n::Int64, h::Float64)
-    t[1] == 0.0 || error("Starting time point must be equal to 0.0.")
+    t[1] == 0. || error("Starting time point must be equal to 0.0.")
     issorted(t, lt=<=) || error("The time points must be strictly sorted.")
     int64(length(t)) == n || error("Number of time points must be equal to the vector holding the time points.")
-    0 < h < 1 || error("Hurst index must be between 0 and 1.")
+    0. < h < 1. || error("Hurst index must be between 0 and 1.")
     new(t, n, h)
   end
 end
@@ -29,14 +29,16 @@ immutable FGN <: ContinuousUnivariateStochasticProcess
 
   function FGN(σ::Float64, h::Float64)
     σ > 0. || error("Standard deviation must be positive.")
-    0 < h < 1 || error("Hurst index must be between 0 and 1.")
+    0. < h < 1. || error("Hurst index must be between 0 and 1.")
     new(σ, h)
   end
 end
 
 FGN(h::Float64) = FGN(1., h)
 
-convert(::Type{FGN}, p::FBM) = FGN(((p.t[end]-p.t[1])/(p.n-1))^p.h, p.h)
+convert(::Type{FBM}, p::BrownianMotion) = FBM(p.t, p.n, 0.5)
+convert(::Type{FGN}, p::BrownianMotion) = FGN((p.t[end]/(p.n-1))^0.5, 0.5)
+convert(::Type{FGN}, p::FBM) = FGN((p.t[end]/(p.n-1))^p.h, p.h)
 
 function autocov(p::FGN, i::Int64, j::Int64)
   twoh::Float64 = 2*p.h
