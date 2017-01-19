@@ -7,19 +7,19 @@ immutable FBM <: ContinuousUnivariateStochasticProcess
   function FBM(t::Vector{Float64}, n::Int64, h::Float64)
     t[1] == 0. || error("Starting time point must be equal to 0.0.")
     issorted(t, lt=<=) || error("The time points must be strictly sorted.")
-    int64(length(t)) == n || error("Number of time points must be equal to the vector holding the time points.")
-    0. < h < 1. || error("Hurst index must be between 0 and 1.")
+    length(t) == n || error("Number of time points must be equal to the vector holding the time points.")
+    0 < h < 1 || error("Hurst index must be between 0 and 1.")
     new(t, n, h)
   end
 end
 
-FBM(t::Vector{Float64}, h::Float64) = FBM(t, int64(length(t)), h)
-FBM(t::Ranges, h::Float64) = FBM(collect(t), int64(length(t)), h)
-FBM(t::Float64, n::Int64, h::Float64) = FBM(t/n:t/n:t, h)
+FBM(t::Vector{Float64}, h::Float64) = FBM(t, Int64(length(t)), h)
+FBM(t::Range, h::Float64) = FBM(collect(t), Int64(length(t)), h)
+FBM(t::Float64, n::Int64, h::Float64) = FBM(0.0:t/n:t-t/n, h)
 FBM(t::Float64, h::Float64) = FBM([t], 1, h)
 
 FBM(t::Matrix{Float64}, h::Float64) = FBM[FBM(t[:, i], h) for i = 1:size(t, 2)]
-FBM(t::Ranges, np::Int, h::Float64) = FBM[FBM(t, h) for i = 1:np]
+FBM(t::Range, np::Int, h::Float64) = FBM[FBM(t, h) for i = 1:np]
 FBM(t::Float64, n::Int64, np::Int, h::Float64) = FBM[FBM(t, n, h) for i = 1:np]
 
 # Fractional Gaussian noise
@@ -110,10 +110,10 @@ end
 ### T. Dieker, Simulation of Fractional Brownian Motion, master thesis, 2004.
 ### The complexity of the algorithm is O(n^3), where n is the number of FBM samples.
 function rand_chol(p::FBM; fbm::Bool=true)
-  w = chol(autocov(p), :L)*randn(p.n-1)
+  w = (chol(autocov(p))')*randn(p.n-1)
 
   # If fbm is true return FBM, otherwise return FGN
-  w = [0., w]
+  insert!(w, 1, 0.0)
   if !fbm
     w = diff(w)
   end
@@ -143,15 +143,15 @@ end
 ### The complexity of the algorithm is O(n*log(n)), where n=2^p is the number of FBM samples.
 function rand_fft(p::FBM; fbm::Bool=true)
   # Determine number of points of simulated FBM
-  pnmone::Int64 = p.n-1
-  n::Int64 = 2^ceil(log2(pnmone))
+  pnmone = p.n-1
+  n = 1 << Int(ceil(log2(pnmone)))
 
   # Compute autocovariance sequence of underlying FGN
   c = Array(Float64, n+1)
   autocov!(c, FGN((1/n)^p.h, p.h), 0:n)
 
   # Compute square root of eigenvalues of circular autocovariance sequence
-  l = real(fft([c, c[end-1:-1:2]]))
+  l = real(fft(cat(1, c, c[end-1:-1:2])))
   all(i->(i>0), l) || error("Non-positive eigenvalues encountered.")
   lsqrt = sqrt(l)
 
@@ -161,11 +161,11 @@ function rand_fft(p::FBM; fbm::Bool=true)
 
   # Generate fractional Gaussian noise (retain only the first p.n-1 values)
   x = sqrt(0.5)*lsqrt[2:n].*complex(z[2*(2:n)-2], z[2*(2:n)-1])
-  w = real(bfft([lsqrt[1]*z[1], x, lsqrt[n+1]*z[twon], conj(reverse(x))]))[1:pnmone]/sqrt(twon)
+  w = real(bfft(cat(1, lsqrt[1]*z[1], x, lsqrt[n+1]*z[twon], conj(reverse(x)))))[1:pnmone]/sqrt(twon)
 
   # If fbm is true return FBM, otherwise return FGN
   if fbm
-    w = [0., cumsum(w)]
+    w = insert!(cumsum(w), 1, 0.0)
   end
 
   w
