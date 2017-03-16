@@ -110,6 +110,7 @@ end
 ### T. Dieker, Simulation of Fractional Brownian Motion, master thesis, 2004.
 ### The complexity of the algorithm is O(n^3), where n is the number of FBM samples.
 function rand_chol(p::FBM; fbm::Bool=true)
+  println("Using Cholesky decomposition")
   w = (chol(autocov(p))')*randn(p.n-1)
 
   # If fbm is true return FBM, otherwise return FGN
