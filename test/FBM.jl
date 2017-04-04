@@ -5,9 +5,19 @@ using Base.Test
 
 p = FBM(0:1/2^10:1, 0.4)
 
+# fBm using FFT approach
+
 rand(p)
 rand(p, fbm=false)
 rand([p, p])
-rand(p, rtype=:chol)
-rand(p, fbm=false, rtype=:chol)
-rand([p, p], rtype=:chol)
+
+# fBm using Riemann-Liouville approach
+
+rand(p, method=:rl)
+rand(p, method=:rl, wtype=:improved)
+
+# fBm using Cholesky approach
+
+rand(p, method=:chol)
+rand(p, fbm=false, method=:chol)
+rand([p, p], method=:chol)

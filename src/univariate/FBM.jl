@@ -109,8 +109,8 @@ end
 ### rand_chol generates FBM using the method based on Cholesky decomposition.
 ### T. Dieker, Simulation of Fractional Brownian Motion, master thesis, 2004.
 ### The complexity of the algorithm is O(n^3), where n is the number of FBM samples.
-function rand_chol(p::FBM; fbm::Bool=true)
-  
+function rand_chol(p::FBM, fbm::Bool=true)
+
   w = (chol(autocov(p))')*randn(p.n-1)
 
   # If fbm is true return FBM, otherwise return FGN
@@ -122,13 +122,13 @@ function rand_chol(p::FBM; fbm::Bool=true)
   w
 end
 
-function rand_chol(p::Vector{FBM}; fbm::Bool=true)
+function rand_chol(p::Vector{FBM}, fbm::Bool=true)
   n::Int64 = fbm ? p[1].n : p[1].n-1
   np = length(p)
   x = Array(Float64, n, np)
 
   for i = 1:np
-    x[:, i] = rand_chol(p[i], fbm=fbm)
+    x[:, i] = rand_chol(p[i], fbm)
   end
 
   x
@@ -142,7 +142,7 @@ end
 ### Davies–Harte Algorithm, With Application to Long Memory Processes, Journal of Time Series Analysis, 24 (5), 2003,
 ### pp. 505-511.
 ### The complexity of the algorithm is O(n*log(n)), where n=2^p is the number of FBM samples.
-function rand_fft(p::FBM; fbm::Bool=true)
+function rand_fft(p::FBM, fbm::Bool=true)
   # Determine number of points of simulated FBM
   pnmone = p.n-1
   n = 1 << Int(ceil(log2(pnmone)))
@@ -172,97 +172,88 @@ function rand_fft(p::FBM; fbm::Bool=true)
   w
 end
 
-function rand_fft(p::Vector{FBM}; fbm::Bool=true)
+function rand_fft(p::Vector{FBM}, fbm::Bool=true)
   n::Int64 = fbm ? p[1].n : p[1].n-1
   np = length(p)
   x = Array(Float64, n, np)
 
   for i = 1:np
-    x[:, i] = rand_fft(p[i], fbm=fbm)
+    x[:, i] = rand_fft(p[i], fbm)
   end
 
   x
 end
 
-function rand(p::FBM; fbm::Bool=true, rtype::Symbol=:fft)
-  if rtype == :chol
-    rand_chol(p; fbm=fbm)
-  elseif rtype == :fft
-    rand_fft(p; fbm=fbm)
-  else
+### Implementation of "exact discrete" method for simulating Riemann-Liouville fBm
+### Based on Muniandy, S. & Lim, S. Modeling of locally self-similar processes using multifractional
+### Brownian motion of Riemann-Liouville type. Physical Review E 63, 046104. ISSN: 1063-651X (2001).
+### Specifically, Eqn. 17, 18 and 19.
+### From Muniandy (2001), Reimann-Liouville fBm is defined as,
+### B_H(t)=\frac{1}{\Gamma(H+0.5)}\int^{t}_{0}(t-s)^(H-0.5)dB(s), t\geq0.
+### Here we focus on the discrete time t_j=j\Delta t approximation,
+### B_H(t_j)=\frac{1}{\Gamma(H+0.5)}\sum^{j}_{i=1}\int^{i\Delta t}_{(i-1)\Delta t}(t_j-\tau)^(H-0.5)dB(\tau)
+### The exact solution to the interior integral results in a weighting function, implemented here with the :Exact key.
+### An "improved" weighting function was proposed by
+### Rambaldi, S. & Pinazza, O. An accurate fractional Brownian motion generator. Physica A 208, 21–30 (1994).
+### We have implemented this here with the :Improved key.
+function rand_rl(p::FBM, fbm::Bool=true; wtype::Symbol=:exact)
+  # We are going to require that the time points are evenly spaced to keep things simple
+  dt = unique(diff(p.t))
+  if length(dt) != 1
+	  error("For this simulation technique, the fBm process must be sampled across a uniform temporal grid")
   end
-end
 
-function rand(p::Vector{FBM}; fbm::Bool=true, rtype::Symbol=:fft)
-  if rtype == :chol
-    rand_chol(p; fbm=fbm)
-  elseif rtype == :fft
-    rand_fft(p; fbm=fbm)
-  else
-  end
-end
+  dt = dt[1]
 
+  w_mat = zeros(p.n-1,p.n-1) # Prealocate a weight matrix. Note that this will be upper triangular
 
-
-# Implementation of "exact discrete" method for simulating Riemann-Liouville fBm
-# Based on Muniandy, S. & Lim, S. Modeling of locally self-similar processes using multifractional
-# Brownian motion of Riemann-Liouville type. Physical Review E 63, 046104. ISSN: 1063-
-# 651X (2001).
-# Specifically, Eqn. 17, 18 and 19.
-# From Muniandy 2001, Reimann-Liouville fBm is defined as, 
-# B_H(t)=\frac{1}{\Gamma(H+0.5)}\int^{t}_{0}(t-s)^(H-0.5)dB(s), t\geq0.
-# Here we focus on the discrete time t_j=j\Delta t approximation,
-# B_H(t_j)=\frac{1}{\Gamma(H+0.5)}\sum^{j}_{i=1}\int^{i\Delta t}_{(i-1)\Delta t}(t_j-\tau)^(H-0.5)dB(\tau)
-# The exact solution to the interior integral results in a weighting function that we have implemented here with the :Exact key.
-# An "improved" weighting function was proposed by Rambaldi, S. & Pinazza, O. An accurate fractional Brownian motion generator. Physica A
-# 208, 21–30 (1994). We have implemented this here with the :Improved key.
-
-function rand_RL_Disc(p::FBM,fbm::Bool=true,w_type::Symbol=:Exact)
-# We are going to require that the time points are evenly spaced to keep things simple
-dt = unique(diff(p.t))
-if length(dt) != 1
-	error("For this simulation technique, the fBm process must be sampled across a uniform temporal grid")
-end
-
-dt = dt[1]
-
-w_mat = zeros(p.n-1,p.n-1) # Prealocate a weight matrix. Note that this will be upper triangular
-
-if w_type==:Exact
   for j=1:p.n-1
-	  for i=1:j
-		  w_mat[i,j] = ExactWeight(p.h,(j-i+1)*dt,dt)
-	  end
+    for i=1:j
+      w_mat[i,j] = weight(p.h, (j-i+1)*dt, dt, wtype)
+    end
   end
-elseif w_type==:Improved
-	for j=1:p.n-1
-	  for i=1:j
-		  w_mat[i,j] = ImprovedWeight(p.h,(j-i+1)*dt,dt)
-	  end
-	end
-else
-  error("Unknown symbol. Options are :Exact and :Improved")
-end
-	
+
   # Multiply a vector of white noise by the weight matrix and scale appropriately.
 	X = squeeze(sqrt(2)*(randn(p.n-1)'*w_mat),1).*sqrt(dt)
-	
-	insert!(X, 1, 0.0)  # Snap to zero. Not clear if this causes a discontinuity in the correlation structure. 
+
+	insert!(X, 1, 0.0)  # Snap to zero. Not clear if this causes a discontinuity in the correlation structure.
   #It is worth considering alternative for the above line: generate path X of length p.n, then let X = X-X[1].
-	
-return X
+
+  return X
 end
 
-function ExactWeight(H::Float64,t::Float64,dt::Float64)
+weight(H::Float64, t::Float64, dt::Float64, method::Symbol=:exact) = weight(H, t, dt, Val{method})
+
+function weight(H::Float64, t::Float64, dt::Float64, ::Type{Val{:exact}})
 	nom = t^(H+.5)-(t-dt)^(H+.5)
 	denom = gamma(H+.5)*(H+.5)*dt
-	weight = nom/denom
-	return weight
+	return nom/denom
 end
 
-function ImprovedWeight(H::Float64,t::Float64,dt::Float64)
+function weight(H::Float64, t::Float64, dt::Float64, ::Type{Val{:improved}})
 	nom = t^(2*H)-(t-dt)^(2*H)
 	denom = 2*H*dt
-	weight = sqrt(nom/denom)/gamma(H+.5)
-	return weight
+	return sqrt(nom/denom)/gamma(H+.5)
+end
+
+### API functions
+
+function rand(p::FBM; fbm::Bool=true, method::Symbol=:fft, args...)
+  if method == :fft
+    rand_fft(p, fbm)
+  elseif method == :rl
+    rand_rl(p, fbm; args...)
+  elseif method == :chol
+    rand_chol(p, fbm)
+  else
+  end
+end
+
+function rand(p::Vector{FBM}; fbm::Bool=true, method::Symbol=:fft)
+  if method == :fft
+    rand_fft(p, fbm)
+  elseif method == :chol
+    rand_chol(p, fbm)
+  else
+  end
 end
