@@ -122,18 +122,6 @@ function rand_chol(p::FBM, fbm::Bool=true)
   w
 end
 
-function rand_chol(p::Vector{FBM}, fbm::Bool=true)
-  n::Int64 = fbm ? p[1].n : p[1].n-1
-  np = length(p)
-  x = Array(Float64, n, np)
-
-  for i = 1:np
-    x[:, i] = rand_chol(p[i], fbm)
-  end
-
-  x
-end
-
 ### rand_fft generates FBM using fast Fourier transform (FFT).
 ### The time interval of FBM is [0, 1] with a stepsize of 2^p, where p is a natural number.
 ### The algorithm is known as the Davies-Harte method or the method of circular embedding.
@@ -170,18 +158,6 @@ function rand_fft(p::FBM, fbm::Bool=true)
   end
 
   w
-end
-
-function rand_fft(p::Vector{FBM}, fbm::Bool=true)
-  n::Int64 = fbm ? p[1].n : p[1].n-1
-  np = length(p)
-  x = Array(Float64, n, np)
-
-  for i = 1:np
-    x[:, i] = rand_fft(p[i], fbm)
-  end
-
-  x
 end
 
 ### Implementation of "exact discrete" method for simulating Riemann-Liouville fBm
@@ -246,14 +222,18 @@ function rand(p::FBM; fbm::Bool=true, method::Symbol=:fft, args...)
   elseif method == :chol
     rand_chol(p, fbm)
   else
+    error("Non-existing method $method")
   end
 end
 
-function rand(p::Vector{FBM}; fbm::Bool=true, method::Symbol=:fft)
-  if method == :fft
-    rand_fft(p, fbm)
-  elseif method == :chol
-    rand_chol(p, fbm)
-  else
+function rand(p::Vector{FBM}; fbm::Bool=true, method::Symbol=:fft, args...)
+  n::Int64 = fbm ? p[1].n : p[1].n-1
+  np = length(p)
+  x = Array(Float64, n, np)
+
+  for i = 1:np
+    x[:, i] = rand(p[i]; fbm=fbm, method=method, args...)
   end
+
+  x
 end

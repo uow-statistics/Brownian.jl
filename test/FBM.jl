@@ -15,6 +15,8 @@ rand([p, p])
 
 rand(p, method=:rl)
 rand(p, method=:rl, wtype=:improved)
+rand([p, p], method=:rl)
+rand([p, p], method=:rl, wtype=:improved)
 
 # fBm using Cholesky approach
 
