@@ -15,5 +15,5 @@ rand([p, p], rtype=:chol)
 
 P = autocov(p)
 Q = autocov(q)
-c = chol(P)
-CholUpdate(Q,convert(Array{Float64,2},c))
+c = chol(P)'
+CholUpdate(convert(Array{Float64,2},c),Q)
