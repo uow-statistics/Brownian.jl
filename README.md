@@ -6,7 +6,8 @@ The Julia `Brownian` package is aimed at providing a centralized repository of a
 stochastic processes. More precisely, the package currently provides routines for random sampling from
 * one-dimensional Brownian motion via random walk,
 * one-dimensional fractional Brownian motion (FBM) and one-dimensional fractional Gaussian noise (FGN) via the Cholesky
-decomposition method and via the Davies-Harte method, which makes use of fast Fourier transforms.
+decomposition method or the Davies-Harte method, which makes use of fast Fourier transforms,
+* one-dimensional Riemann-Liouville fractional Brownian motion (FBM) via an exact discrete method.
 
 The future roadmap would be to provide implementations for sampling from
 * one-dimensional Brownian motion via Brownian bridge and via multivariate normals,
@@ -40,11 +41,14 @@ using Brownian
 
 p = FBM(0:1/2^10:1, 0.4)
 
-# Using the Davies-Harte algorithm
+# Using the Davies-Harte algorithm, which relies on fast Fourier transforms (FFT)
 rand(p)
 
-# Using the Cholesky method
-rand(p, rtype=:chol)
+# Using a method based on the Cholesky decomposition of the covariance matrix of FBM
+rand(p, method=:chol)
+
+# Using an exact discrete method for simulating Riemann-Liouville FBM
+rand(p, method=:rl)
 ```
 
 To simulate fractional Gaussian noise with the same Hurst index,
@@ -54,8 +58,8 @@ To simulate fractional Gaussian noise with the same Hurst index,
 rand(p, fbm=false)
 
 # Using the Cholesky method
-rand(p, fbm=false, rtype=:chol)
+rand(p, fbm=false, method=:chol)
 ```
 
-Note that fractional Brownian motion is obtained from fractional Gaussian noise by taking cumulative sums (and 
+Note that fractional Brownian motion is obtained from fractional Gaussian noise by taking cumulative sums (and
 conversely FGN is computed from FBM by differencing).
