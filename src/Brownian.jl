@@ -1,4 +1,4 @@
-# __precompile__()
+__precompile__()
 
 module Brownian
 
@@ -27,6 +27,7 @@ export
   convert,
   autocov!,
   autocov,
+  chol_update,
   rand!,
   rand
 

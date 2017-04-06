@@ -238,21 +238,20 @@ function rand(p::Vector{FBM}; fbm::Bool=true, method::Symbol=:fft, args...)
   x
 end
 
-
-function CholUpdate(r0::Array{Float64,2},A::Array{Float64,2})
+function chol_update(r0::Array{Float64,2},A::Array{Float64,2})
 # r0 is a lower triangular matrix found via cholesky decomposition of
 # A(1:end-1,1:end-1), therefore r0 is a matrix of size (N-1)-by-(N-1) when A
 # is of size N-by-N. A is a positive symetric semidefinite matrix by construction.
-    
+
     m = size(A,1); # Assumes A is square
     r1 = zeros(m,m)
     r1[1:end-1,1:end-1] = r0
-    
+
   @inbounds  for i=1:m-1
         r1[m,i] =  (1./r1[i,i])*(A[m,i]-sum(r1[m,1:i].*r1[i,1:i]))[1]
     end
 
     r1[m,m] = sqrt(A[m,m]-sum(r1[m,1:m-1].*r1[m,1:m-1]))[1]
- 
+
     return r1
 end
