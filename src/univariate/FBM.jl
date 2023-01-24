@@ -14,12 +14,12 @@ struct FBM <: ContinuousUnivariateStochasticProcess
 end
 
 FBM(t::Vector{Float64}, h::Float64) = FBM(t, Int64(length(t)), h)
-FBM(t::Range, h::Float64) = FBM(collect(t), Int64(length(t)), h)
+FBM(t::AR, h::Float64) where AR <: AbstractRange = FBM(collect(t), Int64(length(t)), h)
 FBM(t::Float64, n::Int64, h::Float64) = FBM(0.0:t/n:t-t/n, h)
 FBM(t::Float64, h::Float64) = FBM([t], 1, h)
 
 FBM(t::Matrix{Float64}, h::Float64) = FBM[FBM(t[:, i], h) for i = 1:size(t, 2)]
-FBM(t::Range, np::Int, h::Float64) = FBM[FBM(t, h) for i = 1:np]
+FBM(t::AR, np::Int, h::Float64) where AR <: AbstractRange = FBM[FBM(t, h) for i = 1:np]
 FBM(t::Float64, n::Int64, np::Int, h::Float64) = FBM[FBM(t, n, h) for i = 1:np]
 
 # Fractional Gaussian noise

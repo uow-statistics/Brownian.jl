@@ -1,4 +1,4 @@
-abstract type StochasticProcess{F<:VariateForm, S<:ValueSupport} <: Sampleable{F,S}
+abstract type StochasticProcess{F<:VariateForm, S<:ValueSupport} <: Sampleable{F,S} end
 
 const UnivariateStochasticProcess{S<:ValueSupport} = StochasticProcess{Univariate, S}
 const MultivariateStochasticProcess{S<:ValueSupport} = StochasticProcess{Multivariate, S}

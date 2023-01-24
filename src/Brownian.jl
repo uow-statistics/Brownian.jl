@@ -5,8 +5,10 @@ module Brownian
 using Distributions
 using PDMats
 using StatsBase
+using Random
 
-import Base: convert, rand!, rand
+import Base: convert, rand
+import Random: rand!
 import Distributions: VariateForm, Univariate, Multivariate, ValueSupport, Discrete, Continuous, Sampleable
 import StatsBase: IntegerVector, autocov!, autocov
 

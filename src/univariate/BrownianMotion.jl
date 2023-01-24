@@ -11,12 +11,12 @@ struct BrownianMotion <: ContinuousUnivariateStochasticProcess
 end
 
 BrownianMotion(t::Vector{Float64}) = BrownianMotion(t, Int64(length(t)))
-BrownianMotion(t::Range) = BrownianMotion(collect(t), Int64(length(t)))
+BrownianMotion(t::AR) where AR <: AbstractRange = BrownianMotion(collect(t), Int64(length(t)))
 BrownianMotion(t::Float64, n::Int64) = BrownianMotion(0.0:t/n:t-t/n)
 BrownianMotion(t::Float64) = BrownianMotion([t], 1)
 
 BrownianMotion(t::Matrix{Float64}) = BrownianMotion[BrownianMotion(t[:, i]) for i = 1:size(t, 2)]
-BrownianMotion(t::Range, np::Int) = BrownianMotion[BrownianMotion(t) for i = 1:np]
+BrownianMotion(t::AR, np::Int)  where AR <: AbstractRange = BrownianMotion[BrownianMotion(t) for i = 1:np]
 BrownianMotion(t::Float64, n::Int64, np::Int) = BrownianMotion[BrownianMotion(t, n) for i = 1:np]
 
 function rand!(p::BrownianMotion, x::Vector{Float64})
