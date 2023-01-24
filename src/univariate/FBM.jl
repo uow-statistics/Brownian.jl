@@ -1,5 +1,5 @@
 # Fractional Brownian motion
-immutable FBM <: ContinuousUnivariateStochasticProcess
+struct FBM <: ContinuousUnivariateStochasticProcess
   t::Vector{Float64}
   n::Int64
   h::Float64 # Hurst index
@@ -23,7 +23,7 @@ FBM(t::Range, np::Int, h::Float64) = FBM[FBM(t, h) for i = 1:np]
 FBM(t::Float64, n::Int64, np::Int, h::Float64) = FBM[FBM(t, n, h) for i = 1:np]
 
 # Fractional Gaussian noise
-immutable FGN <: ContinuousUnivariateStochasticProcess
+struct FGN <: ContinuousUnivariateStochasticProcess
   σ::Float64
   h::Float64 # Hurst index
 
@@ -248,7 +248,7 @@ function chol_update(r0::Array{Float64,2},A::Array{Float64,2})
     r1[1:end-1,1:end-1] = r0
 
   @inbounds  for i=1:m-1
-        r1[m,i] =  (1./r1[i,i])*(A[m,i]-sum(r1[m,1:i].*r1[i,1:i]))[1]
+        r1[m,i] =  (1. /r1[i,i])*(A[m,i]-sum(r1[m,1:i].*r1[i,1:i]))[1]
     end
 
     r1[m,m] = sqrt(A[m,m]-sum(r1[m,1:m-1].*r1[m,1:m-1]))[1]

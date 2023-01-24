@@ -1,4 +1,4 @@
-immutable MvBrownianMotion{Cov<:AbstractPDMat} <: ContinuousMultivariateStochasticProcess
+struct MvBrownianMotion{Cov<:AbstractPDMat} <: ContinuousMultivariateStochasticProcess
   timepoints::Vector{Float64}
   npoints::Int64
   Σ::Cov

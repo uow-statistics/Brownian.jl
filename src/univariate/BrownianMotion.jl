@@ -1,4 +1,4 @@
-immutable BrownianMotion <: ContinuousUnivariateStochasticProcess
+struct BrownianMotion <: ContinuousUnivariateStochasticProcess
   t::Vector{Float64}
   n::Int64
 
