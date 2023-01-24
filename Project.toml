@@ -1,4 +1,6 @@
 name = "Brownian"
+uuid = "f58dc58e-9be3-11ed-0350-1f2b44d3e2c3"
+version = "0.1.0"
 
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
