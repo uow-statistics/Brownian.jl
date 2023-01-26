@@ -1,9 +1,7 @@
+using Test, Brownian
 println("Running tests:")
 
-tests = [
-  "BrownianMotion",
-  "FBM"
-]
+tests = ["BrownianMotion", "FBM"]
 
 for t in tests
     test_fn = "$t.jl"
