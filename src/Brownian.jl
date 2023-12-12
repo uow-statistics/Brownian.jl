@@ -17,7 +17,7 @@ import Base: convert, rand
 import Random: rand!
 import Distributions:
     VariateForm, Univariate, Multivariate, ValueSupport, Discrete, Continuous, Sampleable
-import StatsBase: IntegerVector, autocov!, autocov
+import StatsBase: autocov!, autocov
 
 export StochasticProcess,
     UnivariateStochasticProcess,
