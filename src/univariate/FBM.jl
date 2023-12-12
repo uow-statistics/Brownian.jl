@@ -67,7 +67,7 @@ end
 
 autocov(p::FGN, maxlag::Int64) = autocov!(Array{Float64}(undef, maxlag, maxlag), p)
 
-function autocov!(y::Vector{Float64}, p::FGN, lags::IntegerVector)
+function autocov!(y::Vector{Float64}, p::FGN, lags::AbstractVector{<:Integer})
     nlags = length(lags)
     twoh::Float64 = 2 * p.h
 
@@ -81,7 +81,7 @@ function autocov!(y::Vector{Float64}, p::FGN, lags::IntegerVector)
     y
 end
 
-autocov(p::FGN, lags::IntegerVector) =
+autocov(p::FGN, lags::AbstractVector{<:Integer}) =
     autocov!(Array{Float64}(undef, length(lags)), p, lags)
 
 function autocov(p::FBM, i::Int64, j::Int64)
